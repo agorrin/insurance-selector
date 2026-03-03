@@ -82,6 +82,44 @@ Make sure to deploy the output of `npm run build`
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
 
+## Carrier Data Import
+
+Use the importer script to parse an Excel file and populate a SQLite database with carrier offerings by state.
+
+### Expected Excel workbook format
+
+The workbook must have at least 2 sheets with the same headers:
+
+- `Carrier`
+- `Illinois` (or `IL`)
+- `Indiana` (or `IN`)
+- `Michigan` (or `MI`)
+
+Sheet 1 values under state columns:
+
+- `auto`
+- `fire`
+- `both`
+- blank/none for no coverage
+
+Sheet 2 values under state columns (flood coverage):
+
+- `yes` / `no` (also supports `y/n`, `true/false`, `1/0`)
+
+### Run import
+
+```bash
+npm run import:carriers -- ./path/to/carriers.xlsx
+```
+
+Optional custom database path:
+
+```bash
+npm run import:carriers -- ./path/to/carriers.xlsx ./data/insurance.db
+```
+
+The script creates a `carrier_offerings` table and upserts rows by the unique pair of `carrier_name` + `state`, combining auto/fire from sheet 1 with flood from sheet 2.
+
 ---
 
 Built with ❤️ using React Router.
