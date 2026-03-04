@@ -117,8 +117,8 @@ export default function Landing() {
 					<p className="text-sm font-medium text-gray-700 dark:text-gray-300">Carriers</p>
 					{carriers.length > 0 ? (
 						<ul className="mt-2 list-disc pl-5 text-sm text-gray-800 dark:text-gray-200">
-							{carriers.map((carrier) => (
-								<li key={carrier}>{carrier}</li>
+							{carriers.map((carrier, index) => (
+								<li key={index}>{carrier}</li>
 							))}
 						</ul>
 					) : hasSearched && !errorMessage && !isLoading ? (
