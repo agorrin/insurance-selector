@@ -221,9 +221,18 @@ function loadWorkbookRows(inputFile: string): CarrierRow[] {
       for (const stateColumn of floodStateColumns) {
         const key = `${carrierName}::${stateColumn.state}`;
         const existing = rowsByKey.get(key);
+        const offersFlood = parseFloodCell(row[stateColumn.key]);
 
         if (existing) {
-          existing.offersFlood = parseFloodCell(row[stateColumn.key]);
+          existing.offersFlood = offersFlood;
+        } else {
+          rowsByKey.set(key, {
+            carrierName,
+            state: stateColumn.state,
+            offersAuto: 0,
+            offersFire: 0,
+            offersFlood,
+          });
         }
       }
     }
