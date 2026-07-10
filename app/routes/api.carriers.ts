@@ -3,23 +3,22 @@ import { DatabaseSync } from "node:sqlite";
 
 import type { Route } from "./+types/api.carriers";
 
-export function resolveInsuranceColumn(insuranceTypes: string[]) {
-  const normalizedTypes = insuranceTypes.map((type) => type.trim().toLowerCase());
-  const insuranceColumns = [] as string[];
+export function resolveInsuranceColumn(insuranceType: string) {
+  const normalized = insuranceType.trim().toLowerCase();
 
-  if (normalizedTypes.includes("auto")) {
-    insuranceColumns.push("offers_auto");
+  if (normalized === "auto") {
+    return "offers_auto";
   }
 
-  if (normalizedTypes.includes("fire")) {
-    insuranceColumns.push("offers_fire");
+  if (normalized === "fire") {
+    return "offers_fire";
   }
 
-  if (normalizedTypes.includes("flood")) {
-    insuranceColumns.push("offers_flood");
+  if (normalized === "flood") {
+    return "offers_flood";
   }
 
-  return insuranceColumns;
+  return "";
 }
 
 export function resolveStateName(state: string) {
@@ -43,9 +42,9 @@ export function resolveStateName(state: string) {
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const stateParam = url.searchParams.get("state")?.trim() ?? "";
-  const insuranceTypes = url.searchParams.get("insuranceTypes")?.trim() ?? "";
+  const insuranceType = url.searchParams.get("insuranceType")?.trim() ?? "";
 
-  if (!stateParam || !insuranceTypes) {
+  if (!stateParam || !insuranceType) {
     return Response.json(
       { message: "Both state and insurance type are required.", carriers: [] },
       { status: 400 },
@@ -60,9 +59,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     );
   }
 
-  const insuranceColumns = resolveInsuranceColumn(insuranceTypes.split(","));
-  console.log("Resolved insurance column:", insuranceColumns);
-  if (insuranceColumns.length === 0) {
+  const insuranceColumn = resolveInsuranceColumn(insuranceType);
+  if (!insuranceColumn) {
     return Response.json(
       { message: "Insurance type must be Auto, Fire, or Flood.", carriers: [] },
       { status: 400 },
@@ -76,7 +74,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     const query = `
       SELECT carrier_name
       FROM carrier_offerings
-      WHERE state = ? AND (${insuranceColumns.map((col) => `${col} = 1`).join(" OR ")})
+      WHERE state = ? AND ${insuranceColumn} = 1
       ORDER BY carrier_name ASC
     `;
 

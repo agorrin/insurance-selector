@@ -5,12 +5,7 @@ const states = [
 	{ label: "Illinois", value: "IL" },
 	{ label: "Michigan", value: "MI" },
 ] as const;
-
-const insuranceTypes = [
-	{ label: "Fire", value: "Fire" },
-	{ label: "Flood", value: "Flood" },
-	{ label: "Auto", value: "Auto"}
-] as const;
+const insuranceTypes = ["Auto", "Fire", "Flood"] as const;
 
 export default function Landing() {
 	const [selectedState, setSelectedState] = useState<string>("");
@@ -19,10 +14,9 @@ export default function Landing() {
 	const [errorMessage, setErrorMessage] = useState<string>("");
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [hasSearched, setHasSearched] = useState<boolean>(false);
-	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
 	const handleSubmit = async () => {
-		if (!selectedState || selectedOptions.length === 0) {
+		if (!selectedState || !selectedInsuranceType) {
 			setErrorMessage("Please select both a state and insurance type.");
 			setCarriers([]);
 			return;
@@ -34,7 +28,7 @@ export default function Landing() {
 
 		try {
 			const response = await fetch(
-				`/api/carriers?state=${encodeURIComponent(selectedState)}&insuranceTypes=${encodeURIComponent(selectedOptions.join(","))}`,
+				`/api/carriers?state=${encodeURIComponent(selectedState)}&insuranceType=${encodeURIComponent(selectedInsuranceType)}`,
 			);
 
 			const data = (await response.json()) as {
@@ -57,41 +51,6 @@ export default function Landing() {
 			setIsLoading(false);
 		}
 	};
-
-	const handleSelect = async (value: string) => {
-		if (!value) {
-			setErrorMessage("Please select at leaset 1 insurance type");
-			return;
-		}
-
-		setSelectedOptions([...selectedOptions, value]);
-
-		try {
-			const response = await fetch(
-				`/api/carriers?state=${encodeURIComponent(selectedState)}&insuranceTypes=${encodeURIComponent(selectedOptions.join(","))}`,
-			);
-
-			const data = (await response.json()) as {
-				carriers?: string[];
-				message?: string;
-			};
-
-			if (!response.ok) {
-				setErrorMessage(data.message ?? "Unable to load carriers.");
-				setCarriers([]);
-				return;
-			}
-
-			setCarriers(data.carriers ?? []);
-			setHasSearched(true);
-		} catch {
-			setErrorMessage("Unable to load carriers.");
-			setCarriers([]);
-		} finally {
-			setIsLoading(false);
-		}
-
-	}
 
 	return (
 		<main className="flex items-center justify-center min-h-screen px-4">
@@ -128,7 +87,7 @@ export default function Landing() {
 					Insurance Type
 				</label>
 				<select
-					id="insurance-select"
+					id="insurance-type-select"
 					value={selectedInsuranceType}
 					onChange={(event) => setSelectedInsuranceType(event.target.value)}
 					className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
@@ -136,9 +95,9 @@ export default function Landing() {
 					<option value="" disabled>
 						Select an insurance type
 					</option>
-					{insuranceTypes.map((type) => (
-						<option key={type.value} value={type.value}>
-							{type.label}
+					{insuranceTypes.map((insuranceType) => (
+						<option key={insuranceType} value={insuranceType}>
+							{insuranceType}
 						</option>
 					))}
 				</select>
