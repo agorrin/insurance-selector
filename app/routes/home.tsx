@@ -3,8 +3,8 @@ import Landing from "../landing/landing";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Obie Insurance App" },
-    { name: "description", content: "Welcome to my Obie Insurance App!" },
+    { title: "Insurance App" },
+    { name: "description", content: "Welcome to my Insurance App!" },
   ];
 }
 
