@@ -42,9 +42,9 @@ export function resolveStateName(state: string) {
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const stateParam = url.searchParams.get("state")?.trim() ?? "";
-  const insuranceType = url.searchParams.get("insuranceType")?.trim() ?? "";
+  const insuranceTypeParam = url.searchParams.get("insuranceTypes")?.trim() ?? "";
 
-  if (!stateParam || !insuranceType) {
+  if (!stateParam || !insuranceTypeParam) {
     return Response.json(
       { message: "Both state and insurance type are required.", carriers: [] },
       { status: 400 },
@@ -59,22 +59,43 @@ export async function loader({ request }: Route.LoaderArgs) {
     );
   }
 
-  const insuranceColumn = resolveInsuranceColumn(insuranceType);
-  if (!insuranceColumn) {
+  const insuranceTypes = insuranceTypeParam
+    .split(",")
+    .map((insuranceType) => insuranceType.trim())
+    .filter((insuranceType) => insuranceType.length > 0);
+
+  if (insuranceTypes.length === 0) {
     return Response.json(
       { message: "Insurance type must be Auto, Fire, or Flood.", carriers: [] },
       { status: 400 },
     );
   }
 
+  const insuranceColumns: string[] = [];
+  for (const insuranceType of insuranceTypes) {
+    const insuranceColumn = resolveInsuranceColumn(insuranceType);
+    if (!insuranceColumn) {
+      return Response.json(
+        { message: "Insurance type must be Auto, Fire, or Flood.", carriers: [] },
+        { status: 400 },
+      );
+    }
+    if (!insuranceColumns.includes(insuranceColumn)) {
+      insuranceColumns.push(insuranceColumn);
+    }
+  }
+
   const dbPath = path.resolve(process.cwd(), "data/insurance.db");
   const db = new DatabaseSync(dbPath, { open: true });
 
   try {
+    const insuranceCondition = insuranceColumns
+      .map((column) => `${column} = 1`)
+      .join(" AND ");
     const query = `
       SELECT carrier_name
       FROM carrier_offerings
-      WHERE state = ? AND ${insuranceColumn} = 1
+      WHERE state = ? AND (${insuranceCondition})
       ORDER BY carrier_name ASC
     `;
 
